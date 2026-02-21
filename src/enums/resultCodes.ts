@@ -1,5 +1,4 @@
-
 export const resultCodes = {
-    SUCCESS: "Success",
-    ERROR: "Error",
+  SUCCESS: "Success",
+  ERROR: "Error",
 };
