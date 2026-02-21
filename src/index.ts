@@ -5,7 +5,7 @@ import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
-
+import globalErrorHandler from "./middlewares/globalHandler.middleware";
 import { testDbConnection } from "./config/db-setup";
 
 const app = express();
@@ -45,6 +45,7 @@ app.get("/health", (req, res) => {
 });
 
 // Global error handler
+app.use(globalErrorHandler);
 
 // 404 handler
 app.use("/{*path}", (req, res) => {
