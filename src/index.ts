@@ -8,6 +8,7 @@ import rateLimit from "express-rate-limit";
 import globalErrorHandler from "./middlewares/globalHandler.middleware";
 import { testDbConnection } from "./config/db-setup";
 import logger from "./utils/logger";
+import { setupRoutes } from "./routes";
 
 const app = express();
 const port = process.env.PORT || 8000;
@@ -34,8 +35,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Routes
-
+setupRoutes(app);
 // Health check endpoint
 app.get("/health", (req, res) => {
   res.status(200).json({
