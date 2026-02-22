@@ -21,9 +21,42 @@ export class QueryBuilder {
       const [field, order] = this.query.sort.split(":");
       if (field && (order === "asc" || order === "desc")) {
         this.options.sort = { field, order };
+        return this;
       }
     }
+
+    const sortBy = this.query.sortBy as string | undefined;
+    const sortOrderRaw = this.query.sortOrder as string | undefined;
+
+    if (sortBy) {
+      let order: "asc" | "desc" = "asc";
+      if (sortOrderRaw === "descend" || sortOrderRaw === "desc") {
+        order = "desc";
+      }
+      this.options.sort = { field: sortBy, order };
+    }
+
     return this;
+  }
+
+  private parseFilterValue(value: unknown): unknown {
+    if (typeof value === "string" && value.includes(",")) {
+      return this.parseFilterValue(value.split(","));
+    }
+    if (Array.isArray(value)) {
+      if (value.length === 1) return this.parseFilterValue(value[0]);
+
+      const parsedValues = value.map((v) => this.parseFilterValue(v));
+
+      if (parsedValues.every((v) => typeof v === "boolean")) {
+        return undefined;
+      }
+
+      return { in: parsedValues };
+    }
+    if (value === "true") return true;
+    if (value === "false") return false;
+    return value;
   }
 
   filter(allowedFields: string[]): this {
@@ -31,9 +64,22 @@ export class QueryBuilder {
 
     allowedFields.forEach((field) => {
       if (this.query[field] !== undefined) {
-        filter[field] = this.query[field];
+        filter[field] = this.parseFilterValue(this.query[field]);
       }
     });
+
+    if (
+      this.query.filters &&
+      typeof this.query.filters === "object" &&
+      !Array.isArray(this.query.filters)
+    ) {
+      const nestedFilters = this.query.filters as Record<string, unknown>;
+      allowedFields.forEach((field) => {
+        if (nestedFilters[field] !== undefined) {
+          filter[field] = this.parseFilterValue(nestedFilters[field]);
+        }
+      });
+    }
 
     this.options.filter = { ...this.options.filter, ...filter };
     return this;
