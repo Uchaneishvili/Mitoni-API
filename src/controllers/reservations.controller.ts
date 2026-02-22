@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { ReservationsService } from "../services/reservations.service";
-import { resultCodes } from "../enums";
 import { QueryBuilder } from "../utils/QueryBuilder";
+import { HttpResponse } from "../utils/HttpResponse";
 
 export class ReservationsController {
   static async getAll(req: Request, res: Response) {
@@ -23,12 +23,12 @@ export class ReservationsController {
     }
 
     const result = await ReservationsService.findAll(options);
-    res.json({ result: resultCodes.SUCCESS, ...result });
+    HttpResponse.ok(res, result);
   }
 
   static async getById(req: Request, res: Response) {
     const reservation = await ReservationsService.findById(req.params.id as string);
-    res.json({ result: resultCodes.SUCCESS, data: reservation });
+    HttpResponse.ok(res, reservation);
   }
 
   static async create(req: Request, res: Response) {
@@ -36,14 +36,14 @@ export class ReservationsController {
       ...req.body,
       startTime: new Date(req.body.startTime),
     });
-    res.status(201).json({ result: resultCodes.SUCCESS, data: reservation });
+    HttpResponse.created(res, reservation);
   }
 
   static async update(req: Request, res: Response) {
     const data = { ...req.body };
     if (data.startTime) data.startTime = new Date(data.startTime);
     const reservation = await ReservationsService.update(req.params.id as string, data);
-    res.json({ result: resultCodes.SUCCESS, data: reservation });
+    HttpResponse.ok(res, reservation);
   }
 
   static async updateStatus(req: Request, res: Response) {
@@ -51,6 +51,6 @@ export class ReservationsController {
       req.params.id as string,
       req.body.status,
     );
-    res.json({ result: resultCodes.SUCCESS, data: reservation });
+    HttpResponse.ok(res, reservation);
   }
 }

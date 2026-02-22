@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { ServicesService } from "../services/services.service";
-import { resultCodes } from "../enums";
 import { QueryBuilder } from "../utils/QueryBuilder";
+import { HttpResponse } from "../utils/HttpResponse";
 
 export class ServicesController {
   static async getAll(req: Request, res: Response) {
@@ -13,26 +13,26 @@ export class ServicesController {
       .build();
 
     const result = await ServicesService.findAll(options);
-    res.json({ result: resultCodes.SUCCESS, ...result });
+    HttpResponse.ok(res, result);
   }
 
   static async getById(req: Request, res: Response) {
     const service = await ServicesService.findById(req.params.id as string);
-    res.json({ result: resultCodes.SUCCESS, data: service });
+    HttpResponse.ok(res, service);
   }
 
   static async create(req: Request, res: Response) {
     const service = await ServicesService.create(req.body);
-    res.status(201).json({ result: resultCodes.SUCCESS, data: service });
+    HttpResponse.created(res, service);
   }
 
   static async update(req: Request, res: Response) {
     const service = await ServicesService.update(req.params.id as string, req.body);
-    res.json({ result: resultCodes.SUCCESS, data: service });
+    HttpResponse.ok(res, service);
   }
 
   static async remove(req: Request, res: Response) {
     await ServicesService.softDelete(req.params.id as string);
-    res.json({ result: resultCodes.SUCCESS, message: "Service deactivated" });
+    HttpResponse.ok(res, undefined, "Service deactivated");
   }
 }

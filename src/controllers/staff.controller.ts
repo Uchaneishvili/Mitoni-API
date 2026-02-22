@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { StaffService } from "../services/staff.service";
-import { resultCodes } from "../enums";
 import { QueryBuilder } from "../utils/QueryBuilder";
+import { HttpResponse } from "../utils/HttpResponse";
 
 export class StaffController {
   static async getAll(req: Request, res: Response) {
@@ -13,31 +13,31 @@ export class StaffController {
       .build();
 
     const result = await StaffService.findAll(options);
-    res.json({ result: resultCodes.SUCCESS, ...result });
+    HttpResponse.ok(res, result);
   }
 
   static async getById(req: Request, res: Response) {
     const staff = await StaffService.findById(req.params.id as string);
-    res.json({ result: resultCodes.SUCCESS, data: staff });
+    HttpResponse.ok(res, staff);
   }
 
   static async create(req: Request, res: Response) {
     const staff = await StaffService.create(req.body);
-    res.status(201).json({ result: resultCodes.SUCCESS, data: staff });
+    HttpResponse.created(res, staff);
   }
 
   static async update(req: Request, res: Response) {
     const staff = await StaffService.update(req.params.id as string, req.body);
-    res.json({ result: resultCodes.SUCCESS, data: staff });
+    HttpResponse.ok(res, staff);
   }
 
   static async remove(req: Request, res: Response) {
     await StaffService.softDelete(req.params.id as string);
-    res.json({ result: resultCodes.SUCCESS, message: "Staff deactivated" });
+    HttpResponse.ok(res, undefined, "Staff deactivated");
   }
 
   static async assignServices(req: Request, res: Response) {
     await StaffService.assignServices(req.params.id as string, req.body.serviceIds);
-    res.json({ result: resultCodes.SUCCESS, message: "Services assigned" });
+    HttpResponse.ok(res, undefined, "Services assigned");
   }
 }
