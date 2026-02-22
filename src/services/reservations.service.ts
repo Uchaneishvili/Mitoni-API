@@ -44,8 +44,18 @@ export class ReservationsService {
   }
 
   static async create(data: CreateReservationInput) {
-    const service = await db.service.findUnique({ where: { id: data.serviceId } });
-    if (!service) throw AppError.notFound("Service not found");
+    const service = await db.service.findFirst({ where: { id: data.serviceId, isActive: true } });
+    if (!service) throw AppError.notFound("Active service not found");
+
+    const staffService = await db.staffService.findFirst({
+      where: { staffId: data.staffId, serviceId: data.serviceId },
+      include: { staff: true },
+    });
+    if (!staffService || !staffService.staff.isActive) {
+      throw AppError.badRequest(
+        "Selected staff member does not provide this service or is inactive",
+      );
+    }
 
     const endTime = new Date(data.startTime.getTime() + service.durationMinutes * 60 * 1000);
 
@@ -69,22 +79,33 @@ export class ReservationsService {
   static async update(id: string, data: UpdateReservationInput) {
     let endTime: Date | undefined;
 
-    if (data.startTime || data.serviceId) {
+    if (data.startTime || data.serviceId || data.staffId) {
       const existing = await db.reservation.findUnique({ where: { id } });
       if (!existing) throw AppError.notFound("Reservation not found");
 
       const serviceId = data.serviceId || existing.serviceId;
+      const staffId = data.staffId || existing.staffId;
       const startTime = data.startTime || existing.startTime;
 
-      const service = await db.service.findUnique({ where: { id: serviceId } });
-      if (!service) throw AppError.notFound("Service not found");
+      const service = await db.service.findFirst({ where: { id: serviceId, isActive: true } });
+      if (!service) throw AppError.notFound("Active service not found");
+
+      const staffService = await db.staffService.findFirst({
+        where: { staffId, serviceId },
+        include: { staff: true },
+      });
+      if (!staffService || !staffService.staff.isActive) {
+        throw AppError.badRequest(
+          "Selected staff member does not provide this service or is inactive",
+        );
+      }
 
       endTime = new Date(startTime.getTime() + service.durationMinutes * 60 * 1000);
 
       const overlap = await db.reservation.findFirst({
         where: {
           id: { not: id },
-          staffId: data.staffId || existing.staffId,
+          staffId,
           status: { notIn: ["CANCELLED"] },
           startTime: { lt: endTime },
           endTime: { gt: startTime },
