@@ -4,7 +4,8 @@ import type { Request, Response, NextFunction, RequestHandler } from "express";
 type ValidatableFields = "body" | "query" | "params";
 type ValidatableRequest = Pick<Request, ValidatableFields>;
 
-const hasKeys = (obj: Record<string, unknown>): boolean => Object.keys(obj).length > 0;
+const hasKeys = (obj: Record<string, unknown> | undefined | null): boolean =>
+  obj != null && Object.keys(obj).length > 0;
 
 export default function Validator(schema: Joi.ObjectSchema): RequestHandler {
   if (!schema) {
@@ -24,8 +25,14 @@ export default function Validator(schema: Joi.ObjectSchema): RequestHandler {
       });
 
       req.body = validated.body ?? {};
-      req.query = validated.query ?? {};
-      req.params = validated.params ?? {};
+
+      const vQuery = validated.query ?? {};
+      Object.keys(req.query).forEach((k) => delete (req.query as Record<string, unknown>)[k]);
+      Object.assign(req.query, vQuery);
+
+      const vParams = validated.params ?? {};
+      Object.keys(req.params).forEach((k) => delete req.params[k]);
+      Object.assign(req.params, vParams);
 
       next();
     } catch (err) {

@@ -9,6 +9,8 @@ import globalErrorHandler from "./middlewares/globalHandler.middleware";
 import { testDbConnection } from "./config/db-setup";
 import logger from "./utils/logger";
 import { setupRoutes } from "./routes";
+import swaggerUI from "swagger-ui-express";
+import { swaggerSpec } from "./swagger";
 
 const app = express();
 const port = process.env.PORT || 8000;
@@ -34,6 +36,7 @@ app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(swaggerSpec));
 
 setupRoutes(app);
 // Health check endpoint
