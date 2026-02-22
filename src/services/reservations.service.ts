@@ -1,39 +1,51 @@
 import { db } from "../config/db-setup";
 import type { ReservationStatus } from "../generated/prisma/enums";
 import type { CreateReservationInput, UpdateReservationInput } from "../types/reservation";
+import type { QueryOptions, PaginatedResult } from "../types/common";
+import { AppError } from "../utils/AppError";
 
 export class ReservationsService {
-  static async findAll(filters?: { staffId?: string; date?: string }) {
-    const where: Record<string, unknown> = {};
+  static async findAll(options: QueryOptions = {}): Promise<PaginatedResult<unknown>> {
+    const { pagination, sort, filter } = options;
+    const page = pagination?.page ?? 1;
+    const limit = pagination?.limit ?? 10;
+    const skip = (page - 1) * limit;
 
-    if (filters?.staffId) {
-      where.staffId = filters.staffId;
-    }
+    const where = filter ?? {};
 
-    if (filters?.date) {
-      const dayStart = new Date(filters.date);
-      const dayEnd = new Date(filters.date);
-      dayEnd.setDate(dayEnd.getDate() + 1);
-      where.startTime = { gte: dayStart, lt: dayEnd };
-    }
+    const [data, total] = await Promise.all([
+      db.reservation.findMany({
+        where,
+        include: { staff: true, service: true },
+        orderBy: sort ? { [sort.field]: sort.order } : { startTime: "asc" },
+        skip,
+        take: limit,
+      }),
+      db.reservation.count({ where }),
+    ]);
 
-    return db.reservation.findMany({
-      ...(Object.keys(where).length > 0 && { where }),
-      include: { staff: true, service: true },
-      orderBy: { startTime: "asc" },
-    });
+    return {
+      data,
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
   }
 
   static async findById(id: string) {
-    return db.reservation.findUnique({
+    const reservation = await db.reservation.findUnique({
       where: { id },
       include: { staff: true, service: true },
     });
+
+    if (!reservation) {
+      throw AppError.notFound("Reservation not found");
+    }
+
+    return reservation;
   }
 
   static async create(data: CreateReservationInput) {
     const service = await db.service.findUnique({ where: { id: data.serviceId } });
-    if (!service) throw new Error("Service not found");
+    if (!service) throw AppError.notFound("Service not found");
 
     const endTime = new Date(data.startTime.getTime() + service.durationMinutes * 60 * 1000);
 
@@ -46,7 +58,7 @@ export class ReservationsService {
       },
     });
 
-    if (overlap) throw new Error("Time slot conflicts with an existing reservation");
+    if (overlap) throw AppError.conflict("Time slot conflicts with an existing reservation");
 
     return db.reservation.create({
       data: { ...data, endTime },
@@ -59,13 +71,13 @@ export class ReservationsService {
 
     if (data.startTime || data.serviceId) {
       const existing = await db.reservation.findUnique({ where: { id } });
-      if (!existing) throw new Error("Reservation not found");
+      if (!existing) throw AppError.notFound("Reservation not found");
 
       const serviceId = data.serviceId || existing.serviceId;
       const startTime = data.startTime || existing.startTime;
 
       const service = await db.service.findUnique({ where: { id: serviceId } });
-      if (!service) throw new Error("Service not found");
+      if (!service) throw AppError.notFound("Service not found");
 
       endTime = new Date(startTime.getTime() + service.durationMinutes * 60 * 1000);
 
@@ -79,7 +91,7 @@ export class ReservationsService {
         },
       });
 
-      if (overlap) throw new Error("Time slot conflicts with an existing reservation");
+      if (overlap) throw AppError.conflict("Time slot conflicts with an existing reservation");
     }
 
     return db.reservation.update({

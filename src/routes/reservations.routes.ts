@@ -6,19 +6,23 @@ import {
   updateReservationSchema,
   updateReservationStatusSchema,
   reservationIdParamSchema,
-  reservationListQuerySchema,
 } from "../validations/reservations.validator";
+import { asyncHandler } from "../utils/asyncHandler";
 
 const router = Router();
 
-router.get("/", Validator(reservationListQuerySchema), ReservationsController.getAll);
-router.get("/:id", Validator(reservationIdParamSchema), ReservationsController.getById);
-router.post("/", Validator(createReservationSchema), ReservationsController.create);
-router.put("/:id", Validator(updateReservationSchema), ReservationsController.update);
+router.get("/", asyncHandler(ReservationsController.getAll));
+router.get(
+  "/:id",
+  Validator(reservationIdParamSchema),
+  asyncHandler(ReservationsController.getById),
+);
+router.post("/", Validator(createReservationSchema), asyncHandler(ReservationsController.create));
+router.put("/:id", Validator(updateReservationSchema), asyncHandler(ReservationsController.update));
 router.patch(
   "/:id/status",
   Validator(updateReservationStatusSchema),
-  ReservationsController.updateStatus,
+  asyncHandler(ReservationsController.updateStatus),
 );
 
 export default router;

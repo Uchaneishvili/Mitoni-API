@@ -27,7 +27,9 @@ export default function Validator(schema: Joi.ObjectSchema): RequestHandler {
       req.body = validated.body ?? {};
 
       const vQuery = validated.query ?? {};
-      Object.keys(req.query).forEach((k) => delete (req.query as Record<string, unknown>)[k]);
+      Object.keys(req.query as Record<string, unknown>).forEach(
+        (k) => delete (req.query as Record<string, unknown>)[k],
+      );
       Object.assign(req.query, vQuery);
 
       const vParams = validated.params ?? {};

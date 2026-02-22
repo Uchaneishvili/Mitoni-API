@@ -6,7 +6,7 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
 import globalErrorHandler from "./middlewares/globalHandler.middleware";
-import { testDbConnection } from "./config/db-setup";
+import { testDbConnection, closeDatabase } from "./config/db-setup";
 import logger from "./utils/logger";
 import { setupRoutes } from "./routes";
 import swaggerUI from "swagger-ui-express";
@@ -18,7 +18,7 @@ const port = process.env.PORT || 8000;
 // Rate limiting
 const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || "900000"), // 15 minutes
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || "100"), // limit each IP to 100 requests per windowMs
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || "100"),
   message: "Too many requests from this IP, please try again later.",
 });
 
@@ -38,7 +38,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(swaggerSpec));
 
+// Routes
 setupRoutes(app);
+
 // Health check endpoint
 app.get("/health", (req, res) => {
   res.status(200).json({
@@ -59,20 +61,37 @@ app.use("/{*path}", (req, res) => {
   });
 });
 
-app.listen(port, async () => {
+const server = app.listen(port, async () => {
   try {
     logger.info(`🚀 Server started on ${process.env.HOST || "localhost"}:${port}`);
-    logger.info(`📊 Environment: ${process.env.NODE_ENV}`);
+    logger.info(`📊 Environment: ${process.env.NODE_ENV || "development"}`);
     logger.info(
       `🔗 API Base URL: ${process.env.API_PREFIX || "/api"}/${process.env.API_VERSION || "v1"}`,
     );
+    logger.info(`📚 Swagger docs: http://localhost:${port}/api-docs`);
 
-    // Test database connection
     await testDbConnection();
   } catch (err) {
     logger.error("❌ Server startup error:", err);
     process.exit(1);
   }
 });
+
+const shutdown = async (signal: string) => {
+  logger.info(`${signal} received — shutting down gracefully…`);
+  server.close(async () => {
+    await closeDatabase();
+    logger.info("Server closed.");
+    process.exit(0);
+  });
+
+  setTimeout(() => {
+    logger.error("Forced shutdown after timeout");
+    process.exit(1);
+  }, 10_000);
+};
+
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
 
 export default app;

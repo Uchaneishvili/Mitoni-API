@@ -1,20 +1,45 @@
 import { db } from "../config/db-setup";
 import type { CreateStaffInput, UpdateStaffInput } from "../types/staff";
+import type { QueryOptions, PaginatedResult } from "../types/common";
+import { AppError } from "../utils/AppError";
 
 export class StaffService {
-  static async findAll(isActive?: boolean) {
-    return db.staff.findMany({
-      ...(isActive !== undefined && { where: { isActive } }),
-      include: { services: { include: { service: true } } },
-      orderBy: { createdAt: "desc" },
-    });
+  static async findAll(options: QueryOptions = {}): Promise<PaginatedResult<unknown>> {
+    const { pagination, sort, filter } = options;
+    const page = pagination?.page ?? 1;
+    const limit = pagination?.limit ?? 10;
+    const skip = (page - 1) * limit;
+
+    const where = { isActive: true, ...filter };
+
+    const [data, total] = await Promise.all([
+      db.staff.findMany({
+        where,
+        include: { services: { include: { service: true } } },
+        orderBy: sort ? { [sort.field]: sort.order } : { createdAt: "desc" },
+        skip,
+        take: limit,
+      }),
+      db.staff.count({ where }),
+    ]);
+
+    return {
+      data,
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
   }
 
   static async findById(id: string) {
-    return db.staff.findUnique({
+    const staff = await db.staff.findUnique({
       where: { id },
       include: { services: { include: { service: true } } },
     });
+
+    if (!staff) {
+      throw AppError.notFound("Staff member not found");
+    }
+
+    return staff;
   }
 
   static async create(data: CreateStaffInput) {

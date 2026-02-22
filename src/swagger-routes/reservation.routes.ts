@@ -121,11 +121,39 @@
  *     tags: [Reservations]
  *     parameters:
  *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Number of items per page
+ *       - in: query
+ *         name: sort
+ *         schema:
+ *           type: string
+ *         description: 'Sort field and order, e.g., startTime:asc'
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search by customerName, customerPhone, or notes
+ *       - in: query
  *         name: staffId
  *         schema:
  *           type: string
  *           format: uuid
  *         description: Filter by staff member
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [PENDING, CONFIRMED, CANCELLED, COMPLETED]
+ *         description: Filter by reservation status
  *       - in: query
  *         name: date
  *         schema:
@@ -134,13 +162,29 @@
  *         description: Filter by date (ISO format)
  *     responses:
  *       200:
- *         description: List of reservations
+ *         description: Paginated list of reservations
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Reservation'
+ *               type: object
+ *               properties:
+ *                 result:
+ *                   type: string
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Reservation'
+ *                 meta:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                     total:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
  */
 
 /**

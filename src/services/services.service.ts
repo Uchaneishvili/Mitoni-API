@@ -1,19 +1,44 @@
 import { db } from "../config/db-setup";
 import type { CreateServiceInput, UpdateServiceInput } from "../types/service";
+import type { QueryOptions, PaginatedResult } from "../types/common";
+import { AppError } from "../utils/AppError";
 
 export class ServicesService {
-  static async findAll(isActive?: boolean) {
-    return db.service.findMany({
-      ...(isActive !== undefined && { where: { isActive } }),
-      orderBy: { createdAt: "desc" },
-    });
+  static async findAll(options: QueryOptions = {}): Promise<PaginatedResult<unknown>> {
+    const { pagination, sort, filter } = options;
+    const page = pagination?.page ?? 1;
+    const limit = pagination?.limit ?? 10;
+    const skip = (page - 1) * limit;
+
+    const where = { isActive: true, ...filter };
+
+    const [data, total] = await Promise.all([
+      db.service.findMany({
+        where,
+        orderBy: sort ? { [sort.field]: sort.order } : { createdAt: "desc" },
+        skip,
+        take: limit,
+      }),
+      db.service.count({ where }),
+    ]);
+
+    return {
+      data,
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
   }
 
   static async findById(id: string) {
-    return db.service.findUnique({
+    const service = await db.service.findUnique({
       where: { id },
       include: { staff: { include: { staff: true } } },
     });
+
+    if (!service) {
+      throw AppError.notFound("Service not found");
+    }
+
+    return service;
   }
 
   static async create(data: CreateServiceInput) {

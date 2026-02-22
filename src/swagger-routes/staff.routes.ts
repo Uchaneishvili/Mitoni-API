@@ -95,15 +95,59 @@
  *   get:
  *     summary: List all staff members
  *     tags: [Staff]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Number of items per page
+ *       - in: query
+ *         name: sort
+ *         schema:
+ *           type: string
+ *         description: 'Sort field and order, e.g., createdAt:desc'
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search by firstName, lastName, or specialization
+ *       - in: query
+ *         name: isActive
+ *         schema:
+ *           type: boolean
+ *         description: Filter by active status (defaults to true)
  *     responses:
  *       200:
- *         description: List of staff members with their assigned services
+ *         description: Paginated list of staff members with their assigned services
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Staff'
+ *               type: object
+ *               properties:
+ *                 result:
+ *                   type: string
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Staff'
+ *                 meta:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                     total:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
  */
 
 /**

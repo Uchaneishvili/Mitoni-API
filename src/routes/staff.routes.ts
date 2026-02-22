@@ -7,14 +7,19 @@ import {
   staffIdParamSchema,
   assignServicesSchema,
 } from "../validations/staff.validator";
+import { asyncHandler } from "../utils/asyncHandler";
 
 const router = Router();
 
-router.get("/", StaffController.getAll);
-router.get("/:id", Validator(staffIdParamSchema), StaffController.getById);
-router.post("/", Validator(createStaffSchema), StaffController.create);
-router.put("/:id", Validator(updateStaffSchema), StaffController.update);
-router.delete("/:id", Validator(staffIdParamSchema), StaffController.remove);
-router.post("/:id/services", Validator(assignServicesSchema), StaffController.assignServices);
+router.get("/", asyncHandler(StaffController.getAll));
+router.get("/:id", Validator(staffIdParamSchema), asyncHandler(StaffController.getById));
+router.post("/", Validator(createStaffSchema), asyncHandler(StaffController.create));
+router.put("/:id", Validator(updateStaffSchema), asyncHandler(StaffController.update));
+router.delete("/:id", Validator(staffIdParamSchema), asyncHandler(StaffController.remove));
+router.post(
+  "/:id/services",
+  Validator(assignServicesSchema),
+  asyncHandler(StaffController.assignServices),
+);
 
 export default router;

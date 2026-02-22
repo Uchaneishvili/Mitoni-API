@@ -6,13 +6,14 @@ import {
   updateServiceSchema,
   serviceIdParamSchema,
 } from "../validations/services.validator";
+import { asyncHandler } from "../utils/asyncHandler";
 
 const router = Router();
 
-router.get("/", ServicesController.getAll);
-router.get("/:id", Validator(serviceIdParamSchema), ServicesController.getById);
-router.post("/", Validator(createServiceSchema), ServicesController.create);
-router.put("/:id", Validator(updateServiceSchema), ServicesController.update);
-router.delete("/:id", Validator(serviceIdParamSchema), ServicesController.remove);
+router.get("/", asyncHandler(ServicesController.getAll));
+router.get("/:id", Validator(serviceIdParamSchema), asyncHandler(ServicesController.getById));
+router.post("/", Validator(createServiceSchema), asyncHandler(ServicesController.create));
+router.put("/:id", Validator(updateServiceSchema), asyncHandler(ServicesController.update));
+router.delete("/:id", Validator(serviceIdParamSchema), asyncHandler(ServicesController.remove));
 
 export default router;
