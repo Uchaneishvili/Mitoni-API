@@ -1,5 +1,4 @@
 import type { Request, Response, NextFunction, ErrorRequestHandler } from "express";
-import { resultCodes } from "../enums";
 import { AppError } from "../utils/AppError";
 import logger from "../utils/logger";
 
@@ -35,10 +34,10 @@ const globalErrorHandler: ErrorRequestHandler = (
     });
 
     res.status(400).json({
-      result: resultCodes.ERROR,
+      success: false,
+      message: "Validation failed",
       error: {
         code: "VALIDATION_ERROR",
-        message: "Validation failed",
         details: error.details.map((d) => ({
           field: d.path.join("."),
           message: d.message,
@@ -50,10 +49,10 @@ const globalErrorHandler: ErrorRequestHandler = (
 
   if (isPrismaNotFound(error)) {
     res.status(404).json({
-      result: resultCodes.ERROR,
+      success: false,
+      message: "Resource not found",
       error: {
         code: "NOT_FOUND",
-        message: "Resource not found",
       },
     });
     return;
@@ -72,10 +71,10 @@ const globalErrorHandler: ErrorRequestHandler = (
   });
 
   res.status(statusCode).json({
-    result: resultCodes.ERROR,
+    success: false,
+    message: isProduction && statusCode === 500 ? "An unexpected error occurred" : error.message,
     error: {
       code,
-      message: isProduction && statusCode === 500 ? "An unexpected error occurred" : error.message,
       ...(isProduction ? {} : { stack: error.stack }),
     },
   });
