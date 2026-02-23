@@ -10,4 +10,5 @@ export interface UpdateStaffInput {
   lastName?: string;
   specialization?: string;
   isActive?: boolean;
+  services?: string[];
 }

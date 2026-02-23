@@ -71,7 +71,33 @@ export class StaffService {
   }
 
   static async update(id: string, data: UpdateStaffInput) {
-    return db.staff.update({ where: { id }, data });
+    const { services, ...staffData } = data;
+
+    if (services?.length) {
+      const existingServicesCount = await db.service.count({
+        where: { id: { in: services } },
+      });
+
+      if (existingServicesCount !== services.length) {
+        throw AppError.badRequest("One or more assigned services do not exist");
+      }
+    }
+
+    return db.staff.update({
+      where: { id },
+      data: {
+        ...staffData,
+        ...(services
+          ? {
+              services: {
+                deleteMany: {},
+                create: services.map((serviceId) => ({ serviceId })),
+              },
+            }
+          : {}),
+      },
+      include: { services: { include: { service: true } } },
+    });
   }
 
   static async softDelete(id: string) {

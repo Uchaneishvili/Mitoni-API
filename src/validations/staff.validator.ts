@@ -18,6 +18,7 @@ export const updateStaffSchema = Joi.object({
     lastName: Joi.string().trim().min(1).max(100),
     specialization: Joi.string().trim().min(1).max(200),
     isActive: Joi.boolean(),
+    services: Joi.array().items(Joi.string().uuid()).unique(),
   })
     .min(1)
     .required(),
