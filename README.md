@@ -44,10 +44,17 @@ npm install
 ```
 
 ### 2. Environment Configuration
-Copy the sample environment file and adjust the `DATABASE_URL` if your Postgres credentials differ.
+Copy the sample environment file and adjust your variables:
 ```bash
 cp .env.example .env
 ```
+
+**Key Environment Variables to Configure:**
+- `DATABASE_URL`: Your PostgreSQL connection string.
+- `PORT` & `API_PREFIX`: The port (default 8000) and base path route (e.g., `/api`).
+- `CORS_ORIGIN`: Specify allowed origins (e.g., `http://localhost:5173`).
+- `RATE_LIMIT_*`: Modify global rate limits.
+- `LOG_LEVEL`: Choose Winston severity level (`info`, `debug`, `error`, etc.).
 
 ### 3. Database Setup
 Push the schema to your local PostgreSQL instance and generate the Prisma Client:
