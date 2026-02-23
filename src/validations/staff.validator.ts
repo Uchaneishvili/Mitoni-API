@@ -5,7 +5,7 @@ export const createStaffSchema = Joi.object({
     firstName: Joi.string().trim().min(1).max(100).required(),
     lastName: Joi.string().trim().min(1).max(100).required(),
     specialization: Joi.string().trim().min(1).max(200).required(),
-    services: Joi.array().items(Joi.string().uuid()).optional(),
+    services: Joi.array().items(Joi.string().uuid()).unique().optional(),
   }).required(),
 });
 

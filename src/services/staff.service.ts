@@ -45,10 +45,20 @@ export class StaffService {
   static async create(data: CreateStaffInput) {
     const { services, ...staffData } = data;
 
+    if (services && services.length > 0) {
+      const existingServicesCount = await db.service.count({
+        where: { id: { in: services } },
+      });
+
+      if (existingServicesCount !== services.length) {
+        throw AppError.badRequest("One or more assigned services do not exist");
+      }
+    }
+
     return db.staff.create({
       data: {
         ...staffData,
-        ...(services && services.length > 0
+        ...(services?.length
           ? {
               services: {
                 create: services.map((serviceId) => ({ serviceId })),
