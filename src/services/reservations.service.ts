@@ -1,5 +1,6 @@
 import { db } from "../config/db-setup";
 import type { ReservationStatus } from "../generated/prisma/enums";
+import type { Prisma } from "../generated/prisma/client";
 import type { CreateReservationInput, UpdateReservationInput } from "../types/reservation";
 import type { QueryOptions, PaginatedResult } from "../types/common";
 import { AppError } from "../utils/AppError";
@@ -11,7 +12,12 @@ export class ReservationsService {
     const limit = pagination?.limit ?? 10;
     const skip = (page - 1) * limit;
 
-    const where = filter ?? {};
+    const baseFilter = (filter as Prisma.ReservationWhereInput) || {};
+
+    const where: Prisma.ReservationWhereInput = {
+      status: { not: "CANCELLED" },
+      ...baseFilter,
+    };
 
     const [data, total] = await Promise.all([
       db.reservation.findMany({
