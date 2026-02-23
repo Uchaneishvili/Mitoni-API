@@ -2,6 +2,7 @@ export interface CreateStaffInput {
   firstName: string;
   lastName: string;
   specialization: string;
+  services?: string[];
 }
 
 export interface UpdateStaffInput {

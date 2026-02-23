@@ -43,7 +43,21 @@ export class StaffService {
   }
 
   static async create(data: CreateStaffInput) {
-    return db.staff.create({ data });
+    const { services, ...staffData } = data;
+
+    return db.staff.create({
+      data: {
+        ...staffData,
+        ...(services && services.length > 0
+          ? {
+              services: {
+                create: services.map((serviceId) => ({ serviceId })),
+              },
+            }
+          : {}),
+      },
+      include: { services: { include: { service: true } } },
+    });
   }
 
   static async update(id: string, data: UpdateStaffInput) {
