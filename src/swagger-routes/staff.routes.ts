@@ -21,6 +21,10 @@
  *           type: string
  *         specialization:
  *           type: string
+ *         avatarUrl:
+ *           type: string
+ *           format: uri
+ *           nullable: true
  *         isActive:
  *           type: boolean
  *         createdAt:
@@ -56,6 +60,9 @@
  *           type: string
  *           minLength: 1
  *           maxLength: 200
+ *         avatarUrl:
+ *           type: string
+ *           format: uri
  *
  *     UpdateStaffInput:
  *       type: object
@@ -73,6 +80,9 @@
  *           type: string
  *           minLength: 1
  *           maxLength: 200
+ *         avatarUrl:
+ *           type: string
+ *           format: uri
  *         isActive:
  *           type: boolean
  *

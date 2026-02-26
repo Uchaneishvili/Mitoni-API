@@ -4,7 +4,8 @@ export const createStaffSchema = Joi.object({
   body: Joi.object({
     firstName: Joi.string().trim().min(1).max(100).required(),
     lastName: Joi.string().trim().min(1).max(100).required(),
-    specialization: Joi.string().trim().min(1).max(200).required(),
+    specialization: Joi.string().trim().min(1).max(200).optional(),
+    avatarUrl: Joi.string().uri().optional(),
     services: Joi.array().items(Joi.string().uuid()).unique().optional(),
   }).required(),
 });
@@ -16,7 +17,8 @@ export const updateStaffSchema = Joi.object({
   body: Joi.object({
     firstName: Joi.string().trim().min(1).max(100),
     lastName: Joi.string().trim().min(1).max(100),
-    specialization: Joi.string().trim().min(1).max(200),
+    specialization: Joi.string().trim().min(1).max(200).optional(),
+    avatarUrl: Joi.string().uri().optional(),
     isActive: Joi.boolean(),
     services: Joi.array().items(Joi.string().uuid()).unique(),
   })
