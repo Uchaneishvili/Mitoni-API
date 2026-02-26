@@ -11,6 +11,7 @@
  *   schemas:
  *     Service:
  *       type: object
+ *       additionalProperties: true
  *       properties:
  *         id:
  *           type: string
@@ -24,6 +25,9 @@
  *           format: float
  *         isActive:
  *           type: boolean
+ *         color:
+ *           type: string
+ *           nullable: true
  *         createdAt:
  *           type: string
  *           format: date-time
@@ -33,6 +37,7 @@
  *
  *     CreateServiceInput:
  *       type: object
+ *       additionalProperties: true
  *       required:
  *         - name
  *         - durationMinutes
@@ -51,9 +56,12 @@
  *           format: float
  *           exclusiveMinimum: true
  *           minimum: 0
+ *         color:
+ *           type: string
  *
  *     UpdateServiceInput:
  *       type: object
+ *       additionalProperties: true
  *       minProperties: 1
  *       properties:
  *         name:
@@ -71,6 +79,8 @@
  *           minimum: 0
  *         isActive:
  *           type: boolean
+ *         color:
+ *           type: string
  */
 
 /**
