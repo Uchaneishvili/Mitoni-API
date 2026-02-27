@@ -5,12 +5,13 @@ const RESERVATION_STATUSES = ["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED"];
 export const createReservationSchema = Joi.object({
   body: Joi.object({
     staffId: Joi.string().uuid().required(),
-    serviceId: Joi.string().uuid().required(),
+    serviceId: Joi.string().uuid(),
+    serviceIds: Joi.array().items(Joi.string().uuid()).min(1),
     customerName: Joi.string().trim().min(1).max(200).required(),
     customerPhone: Joi.string().trim().max(50),
     startTime: Joi.date().iso().greater("now").required(),
     notes: Joi.string().trim().max(500),
-  }).required(),
+  }).xor("serviceId", "serviceIds"),
 });
 
 export const updateReservationSchema = Joi.object({

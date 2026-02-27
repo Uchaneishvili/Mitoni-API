@@ -53,7 +53,6 @@
  *       type: object
  *       required:
  *         - staffId
- *         - serviceId
  *         - customerName
  *         - startTime
  *       properties:
@@ -63,6 +62,12 @@
  *         serviceId:
  *           type: string
  *           format: uuid
+ *         serviceIds:
+ *           type: array
+ *           items:
+ *             type: string
+ *             format: uuid
+ *           minItems: 1
  *         customerName:
  *           type: string
  *           minLength: 1
@@ -226,11 +231,13 @@
  *             $ref: '#/components/schemas/CreateReservationInput'
  *     responses:
  *       201:
- *         description: Reservation created successfully
+ *         description: Reservations created successfully
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Reservation'
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Reservation'
  *       400:
  *         description: Validation error or time slot conflict
  *       404:

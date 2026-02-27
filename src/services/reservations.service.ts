@@ -50,36 +50,82 @@ export class ReservationsService {
   }
 
   static async create(data: CreateReservationInput) {
-    const service = await db.service.findFirst({ where: { id: data.serviceId, isActive: true } });
-    if (!service) throw AppError.notFound("Active service not found");
+    const serviceIds = data.serviceIds || (data.serviceId ? [data.serviceId] : []);
 
-    const staffService = await db.staffService.findFirst({
-      where: { staffId: data.staffId, serviceId: data.serviceId },
-      include: { staff: true },
-    });
-    if (!staffService || !staffService.staff.isActive) {
-      throw AppError.badRequest(
-        "Selected staff member does not provide this service or is inactive",
-      );
+    if (serviceIds.length === 0) {
+      throw AppError.badRequest("At least one service is required");
     }
 
-    const endTime = new Date(data.startTime.getTime() + service.durationMinutes * 60 * 1000);
+    const services = await db.service.findMany({
+      where: {
+        id: { in: serviceIds },
+        isActive: true,
+      },
+    });
+
+    if (services.length !== new Set(serviceIds).size) {
+      throw AppError.notFound("One or more active services not found");
+    }
+
+    const orderedServices = serviceIds.map((id) => services.find((s) => s.id === id)!);
+
+    const staffServices = await db.staffService.findMany({
+      where: {
+        staffId: data.staffId,
+        serviceId: { in: serviceIds },
+      },
+      include: { staff: true },
+    });
+
+    if (staffServices.length !== new Set(serviceIds).size) {
+      throw AppError.badRequest("Selected staff member does not provide all requested services");
+    }
+
+    const staff = staffServices[0]?.staff;
+    if (!staff || !staff.isActive) {
+      throw AppError.badRequest("Selected staff member is inactive");
+    }
+
+    let currentStartTime = data.startTime;
+    const reservationsToCreate = [];
+
+    for (const service of orderedServices) {
+      const endTime = new Date(currentStartTime.getTime() + service.durationMinutes * 60 * 1000);
+      reservationsToCreate.push({
+        staffId: data.staffId,
+        serviceId: service.id,
+        customerName: data.customerName,
+        customerPhone: data.customerPhone ?? null,
+        notes: data.notes ?? null,
+        startTime: currentStartTime,
+        endTime,
+      });
+      currentStartTime = endTime;
+    }
+
+    const finalEndTime = currentStartTime;
 
     const overlap = await db.reservation.findFirst({
       where: {
         staffId: data.staffId,
         status: { notIn: ["CANCELLED"] },
-        startTime: { lt: endTime },
+        startTime: { lt: finalEndTime },
         endTime: { gt: data.startTime },
       },
     });
 
     if (overlap) throw AppError.conflict("Time slot conflicts with an existing reservation");
 
-    return db.reservation.create({
-      data: { ...data, endTime },
-      include: { staff: true, service: true },
-    });
+    const createdReservations = await db.$transaction(
+      reservationsToCreate.map((reservation) =>
+        db.reservation.create({
+          data: reservation,
+          include: { staff: true, service: true },
+        }),
+      ),
+    );
+
+    return createdReservations;
   }
 
   static async update(id: string, data: UpdateReservationInput) {

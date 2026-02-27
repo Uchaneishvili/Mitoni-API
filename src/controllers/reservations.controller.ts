@@ -32,11 +32,11 @@ export class ReservationsController {
   }
 
   static async create(req: Request, res: Response) {
-    const reservation = await ReservationsService.create({
+    const reservations = await ReservationsService.create({
       ...req.body,
       startTime: new Date(req.body.startTime),
     });
-    HttpResponse.created(res, reservation);
+    HttpResponse.created(res, reservations);
   }
 
   static async update(req: Request, res: Response) {

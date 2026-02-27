@@ -1,6 +1,7 @@
 export interface CreateReservationInput {
   staffId: string;
-  serviceId: string;
+  serviceId?: string;
+  serviceIds?: string[];
   customerName: string;
   customerPhone?: string;
   startTime: Date;
